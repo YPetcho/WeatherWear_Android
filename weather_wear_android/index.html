@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeatherWear AI</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Hide scrollbar for cleaner look if content overflows slightly */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800 font-sans pb-12">
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-10 shadow-sm">
+        <div class="max-w-3xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-2 text-indigo-600">
+                <i data-lucide="shirt" class="w-6 h-6"></i>
+                <h1 class="text-xl font-bold tracking-tight">WeatherWear AI</h1>
+            </div>
+            <div id="weather-badge" class="hidden items-center gap-2 text-slate-600 bg-slate-100 px-3 py-1.5 rounded-full text-sm font-medium">
+                <i data-lucide="thermometer" class="w-4 h-4"></i>
+                <span id="header-temp-display">--°C Today</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-4 mt-8 space-y-8">
+        
+        <!-- AI Suggestion Card -->
+        <section class="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
+            <div id="weather-icon-bg" class="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                <i data-lucide="cloud" class="w-48 h-48"></i>
+            </div>
+            
+            <div class="relative z-10 flex flex-col md:flex-row gap-6 items-center md:items-start justify-between">
+                <div class="flex-1">
+                    <h2 class="text-indigo-100 font-medium mb-1 uppercase tracking-wider text-sm flex items-center gap-2">
+                        <i data-lucide="settings-2" class="w-4 h-4"></i> 
+                        <span id="suggestion-title">Today's Suggestion</span>
+                    </h2>
+                    <div class="text-5xl font-light mb-4 flex items-center gap-3" id="active-temp-display">
+                        --°C
+                    </div>
+                    
+                    <div id="suggestion-content">
+                        <p class="text-xl">Loading AI suggestion...</p>
+                    </div>
+                </div>
+
+                <!-- Simulation Toggle -->
+                <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 w-full md:w-64 border border-white/20">
+                    <label class="flex items-center justify-between cursor-pointer mb-3">
+                        <span class="text-sm font-medium text-white">Test different weather</span>
+                        <div class="relative">
+                            <input type="checkbox" id="sim-toggle" class="sr-only" />
+                            <div id="sim-track" class="block w-10 h-6 rounded-full transition-colors bg-white/30"></div>
+                            <div id="sim-thumb" class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform"></div>
+                        </div>
+                    </label>
+                    
+                    <div id="sim-slider-container" class="space-y-2 hidden fade-in">
+                        <input 
+                            type="range" 
+                            id="sim-slider"
+                            min="0" max="40" 
+                            value="20" 
+                            class="w-full h-2 bg-white/30 rounded-lg appearance-none cursor-pointer accent-white"
+                        />
+                        <div class="flex justify-between text-xs text-indigo-100">
+                            <span>0°C</span>
+                            <span class="font-bold text-white" id="sim-slider-val">20°C</span>
+                            <span>40°C</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Logging Form -->
+        <section class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+            <h2 class="text-lg font-bold mb-6 flex items-center gap-2 text-slate-800">
+                <i data-lucide="calendar-days" class="w-5 h-5 text-indigo-500"></i>
+                What did you wear today?
+            </h2>
+            
+            <div class="space-y-6">
+                <!-- Top Selection -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-500 mb-3">Top Layer</label>
+                    <div class="flex flex-wrap gap-2" id="top-options-container">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Bottom Selection -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-500 mb-3">Bottom Layer</label>
+                    <div class="flex flex-wrap gap-2" id="bottom-options-container">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Feedback Selection -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-500 mb-3" id="feedback-label">How did it feel?</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button id="feedback-cold" class="feedback-btn flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all border-slate-100 bg-white text-slate-400 hover:border-blue-200" data-value="Too Cold">
+                            <i data-lucide="snowflake" class="w-6 h-6 mb-2"></i>
+                            <span class="font-medium">Too Cold</span>
+                        </button>
+                        <button id="feedback-perfect" class="feedback-btn flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all border-green-500 bg-green-50 text-green-700" data-value="Perfect">
+                            <i data-lucide="smile" class="w-6 h-6 mb-2 text-green-500"></i>
+                            <span class="font-medium">Perfect</span>
+                        </button>
+                        <button id="feedback-hot" class="feedback-btn flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all border-slate-100 bg-white text-slate-400 hover:border-red-200" data-value="Too Hot">
+                            <i data-lucide="flame" class="w-6 h-6 mb-2"></i>
+                            <span class="font-medium">Too Hot</span>
+                        </button>
+                    </div>
+                </div>
+
+                <button id="save-log-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 rounded-2xl transition-colors flex items-center justify-center gap-2 shadow-sm">
+                    Save Today's Outfit
+                </button>
+            </div>
+        </section>
+
+        <!-- History Log -->
+        <section>
+            <h2 class="text-lg font-bold mb-4 text-slate-800 px-2">Your Outfit History</h2>
+            <div class="space-y-3" id="history-container">
+                <!-- Populated by JS -->
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // --- State ---
+        let historyData = [
+            { id: 1, date: '2026-02-15', temp: 14, top: 'Heavy Coat', bottom: 'Jeans', feedback: 'Too Hot' },
+            { id: 2, date: '2026-02-16', temp: 14, top: 'Light Jacket', bottom: 'Jeans', feedback: 'Perfect' },
+            { id: 3, date: '2026-02-17', temp: 18, top: 'T-shirt', bottom: 'Shorts', feedback: 'Too Cold' },
+            { id: 4, date: '2026-02-18', temp: 19, top: 'Long-sleeve', bottom: 'Jeans', feedback: 'Perfect' },
+            { id: 5, date: '2026-02-19', temp: 24, top: 'Sweater', bottom: 'Trousers', feedback: 'Too Hot' },
+            { id: 6, date: '2026-02-20', temp: 25, top: 'T-shirt', bottom: 'Shorts', feedback: 'Perfect' },
+            { id: 7, date: '2026-02-21', temp: 10, top: 'Heavy Coat', bottom: 'Thermal Pants', feedback: 'Perfect' },
+        ];
+        
+        const TOP_OPTIONS = ['Tank Top', 'T-shirt', 'Long-sleeve', 'Button-up', 'Sweater', 'Hoodie', 'Light Jacket', 'Heavy Coat'];
+        const BOTTOM_OPTIONS = ['Shorts', 'Skirt', 'Jeans', 'Trousers', 'Sweatpants', 'Thermal Pants'];
+
+        let currentTemp = null;
+        let selectedTop = 'T-shirt';
+        let selectedBottom = 'Jeans';
+        let selectedFeedback = 'Perfect';
+        let isSimulating = false;
+        let simulatedTemp = 20;
+
+        // --- DOM Elements ---
+        const topOptionsContainer = document.getElementById('top-options-container');
+        const bottomOptionsContainer = document.getElementById('bottom-options-container');
+        const historyContainer = document.getElementById('history-container');
+        const feedbackBtns = document.querySelectorAll('.feedback-btn');
+        const simToggle = document.getElementById('sim-toggle');
+        const simSliderContainer = document.getElementById('sim-slider-container');
+        const simSlider = document.getElementById('sim-slider');
+        const saveBtn = document.getElementById('save-log-btn');
+
+        // --- Initialization ---
+        async function init() {
+            renderOptions();
+            renderHistory();
+            lucide.createIcons(); // Initialize all icons on page load
+            await fetchWeather();
+            updateUI();
+        }
+
+        async function fetchWeather() {
+            try {
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=32.0853&longitude=34.7818&current_weather=true');
+                const data = await res.json();
+                currentTemp = Math.round(data.current_weather.temperature);
+            } catch (err) {
+                console.error("Failed to fetch weather", err);
+                currentTemp = 22; // Fallback
+            }
+            
+            // Show header badge
+            const badge = document.getElementById('weather-badge');
+            document.getElementById('header-temp-display').innerText = `${currentTemp}°C Today`;
+            badge.classList.remove('hidden');
+            badge.classList.add('flex');
+            
+            document.getElementById('feedback-label').innerText = `How did it feel in ${currentTemp}°C?`;
+        }
+
+        // --- Machine Learning Logic (KNN) ---
+        function getSuggestion(activeTemp) {
+            if (activeTemp === null) return null;
+
+            const perfectLogs = historyData.filter(log => log.feedback === 'Perfect');
+
+            if (perfectLogs.length === 0) {
+                if (activeTemp < 10) return { top: 'Heavy Coat', bottom: 'Thermal Pants', basedOnTemp: null };
+                if (activeTemp < 16) return { top: 'Light Jacket', bottom: 'Jeans', basedOnTemp: null };
+                if (activeTemp < 22) return { top: 'Long-sleeve', bottom: 'Jeans', basedOnTemp: null };
+                return { top: 'T-shirt', bottom: 'Shorts', basedOnTemp: null };
+            }
+
+            let closestLog = perfectLogs[0];
+            let minDiff = Math.abs(activeTemp - closestLog.temp);
+
+            for (let i = 1; i < perfectLogs.length; i++) {
+                const diff = Math.abs(activeTemp - perfectLogs[i].temp);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closestLog = perfectLogs[i];
+                }
+            }
+
+            return { top: closestLog.top, bottom: closestLog.bottom, basedOnTemp: closestLog.temp };
+        }
+
+        // --- Render Functions ---
+        function updateUI() {
+            const activeTemp = isSimulating ? simulatedTemp : currentTemp;
+            
+            // Suggestion Card
+            document.getElementById('suggestion-title').innerText = isSimulating ? "Simulated Suggestion" : "Today's Suggestion";
+            document.getElementById('active-temp-display').innerText = activeTemp !== null ? `${activeTemp}°C` : '--°C';
+            
+            // Update Background Icon
+            const iconBgContainer = document.getElementById('weather-icon-bg');
+            let iconHtml = '<i data-lucide="cloud" class="w-48 h-48"></i>';
+            if (activeTemp !== null) {
+                if (activeTemp > 22) iconHtml = '<i data-lucide="sun" class="w-48 h-48"></i>';
+                else if (activeTemp < 15) iconHtml = '<i data-lucide="snowflake" class="w-48 h-48"></i>';
+            }
+            iconBgContainer.innerHTML = iconHtml;
+
+            // Update Suggestion Text
+            const suggestion = getSuggestion(activeTemp);
+            const suggestionContent = document.getElementById('suggestion-content');
+            
+            if (suggestion) {
+                let html = `<p class="text-xl font-medium">Wear a <span class="text-yellow-300 border-b border-yellow-300/30 pb-0.5">${suggestion.top}</span> & <span class="text-yellow-300 border-b border-yellow-300/30 pb-0.5">${suggestion.bottom}</span>.</p>`;
+                if (suggestion.basedOnTemp !== null) {
+                    html += `<p class="text-indigo-100 text-sm mt-2 opacity-90">Based on your logs, you felt perfect wearing this around ${suggestion.basedOnTemp}°C.</p>`;
+                } else {
+                    html += `<p class="text-indigo-100 text-sm mt-2 opacity-90">Based on general weather guidelines.</p>`;
+                }
+                suggestionContent.innerHTML = html;
+            }
+
+            // Update Form UI
+            updateOptionsUI();
+            updateFeedbackUI();
+            
+            // Re-bind new icons
+            lucide.createIcons();
+        }
+
+        function renderOptions() {
+            // Tops
+            topOptionsContainer.innerHTML = TOP_OPTIONS.map(top => 
+                `<button data-value="${top}" class="top-btn px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedTop === top ? 'bg-slate-800 text-white shadow-md scale-105' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">${top}</button>`
+            ).join('');
+
+            // Bottoms
+            bottomOptionsContainer.innerHTML = BOTTOM_OPTIONS.map(bottom => 
+                `<button data-value="${bottom}" class="bottom-btn px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedBottom === bottom ? 'bg-slate-800 text-white shadow-md scale-105' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">${bottom}</button>`
+            ).join('');
+
+            // Bind listeners dynamically
+            document.querySelectorAll('.top-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    selectedTop = e.target.dataset.value;
+                    updateOptionsUI();
+                });
+            });
+
+            document.querySelectorAll('.bottom-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    selectedBottom = e.target.dataset.value;
+                    updateOptionsUI();
+                });
+            });
+        }
+
+        function updateOptionsUI() {
+            document.querySelectorAll('.top-btn').forEach(btn => {
+                const isActive = btn.dataset.value === selectedTop;
+                btn.className = `top-btn px-4 py-2 rounded-full text-sm font-medium transition-all ${isActive ? 'bg-slate-800 text-white shadow-md scale-105' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`;
+            });
+            document.querySelectorAll('.bottom-btn').forEach(btn => {
+                const isActive = btn.dataset.value === selectedBottom;
+                btn.className = `bottom-btn px-4 py-2 rounded-full text-sm font-medium transition-all ${isActive ? 'bg-slate-800 text-white shadow-md scale-105' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`;
+            });
+        }
+
+        function updateFeedbackUI() {
+            feedbackBtns.forEach(btn => {
+                const val = btn.dataset.value;
+                const icon = btn.querySelector('i, svg');
+                const isSelected = selectedFeedback === val;
+                
+                // Reset classes
+                btn.className = 'feedback-btn flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all';
+                
+                if (icon) {
+                    icon.classList.remove('text-blue-500', 'text-green-500', 'text-red-500');
+                }
+
+                if (val === 'Too Cold') {
+                    btn.classList.add(isSelected ? 'border-blue-500' : 'border-slate-100', isSelected ? 'bg-blue-50' : 'bg-white', isSelected ? 'text-blue-700' : 'text-slate-400', 'hover:border-blue-200');
+                    if(isSelected && icon) icon.classList.add('text-blue-500');
+                } else if (val === 'Perfect') {
+                    btn.classList.add(isSelected ? 'border-green-500' : 'border-slate-100', isSelected ? 'bg-green-50' : 'bg-white', isSelected ? 'text-green-700' : 'text-slate-400', 'hover:border-green-200');
+                    if(isSelected && icon) icon.classList.add('text-green-500');
+                } else if (val === 'Too Hot') {
+                    btn.classList.add(isSelected ? 'border-red-500' : 'border-slate-100', isSelected ? 'bg-red-50' : 'bg-white', isSelected ? 'text-red-700' : 'text-slate-400', 'hover:border-red-200');
+                    if(isSelected && icon) icon.classList.add('text-red-500');
+                }
+            });
+        }
+
+        function renderHistory() {
+            if (historyData.length === 0) {
+                historyContainer.innerHTML = `<div class="text-center p-8 text-slate-400 border-2 border-dashed border-slate-200 rounded-3xl">No outfits logged yet. Start tracking to get ML suggestions!</div>`;
+                return;
+            }
+
+            historyContainer.innerHTML = historyData.map(log => {
+                let iconStr = '';
+                let bgClass = '';
+                if (log.feedback === 'Perfect') { iconStr = 'smile'; bgClass = 'bg-green-100 text-green-600'; }
+                else if (log.feedback === 'Too Hot') { iconStr = 'flame'; bgClass = 'bg-red-100 text-red-600'; }
+                else { iconStr = 'snowflake'; bgClass = 'bg-blue-100 text-blue-600'; }
+
+                return `
+                <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-center justify-between group">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center ${bgClass}">
+                            <i data-lucide="${iconStr}" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="font-semibold text-slate-800">${log.temp}°C</span>
+                                <span class="text-slate-300">•</span>
+                                <span class="text-sm text-slate-500">${log.date}</span>
+                            </div>
+                            <p class="text-slate-600 font-medium">
+                                ${log.top} + ${log.bottom}
+                            </p>
+                        </div>
+                    </div>
+                    <button onclick="deleteLog(${log.id})" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100" title="Delete log">
+                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                `;
+            }).join('');
+            
+            lucide.createIcons();
+        }
+
+        // --- Event Handlers ---
+        
+        // Simulator Toggle
+        simToggle.addEventListener('change', (e) => {
+            isSimulating = e.target.checked;
+            
+            // UI Toggle updates
+            const track = document.getElementById('sim-track');
+            const thumb = document.getElementById('sim-thumb');
+            
+            if (isSimulating) {
+                track.classList.replace('bg-white/30', 'bg-green-400');
+                thumb.classList.add('translate-x-4');
+                simSliderContainer.classList.remove('hidden');
+            } else {
+                track.classList.replace('bg-green-400', 'bg-white/30');
+                thumb.classList.remove('translate-x-4');
+                simSliderContainer.classList.add('hidden');
+            }
+            updateUI();
+        });
+
+        // Simulator Slider
+        simSlider.addEventListener('input', (e) => {
+            simulatedTemp = parseInt(e.target.value);
+            document.getElementById('sim-slider-val').innerText = `${simulatedTemp}°C`;
+            updateUI();
+        });
+
+        // Feedback Selection
+        feedbackBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                selectedFeedback = e.currentTarget.dataset.value;
+                updateFeedbackUI();
+            });
+        });
+
+        // Save Log
+        saveBtn.addEventListener('click', () => {
+            if (currentTemp === null) return; // Prevent saving if weather hasn't loaded
+            
+            const newLog = {
+                id: Date.now(),
+                date: new Date().toISOString().split('T')[0],
+                temp: currentTemp,
+                top: selectedTop,
+                bottom: selectedBottom,
+                feedback: selectedFeedback
+            };
+            
+            historyData.unshift(newLog);
+            selectedFeedback = 'Perfect'; // Reset to give submission satisfaction
+            
+            updateUI();
+            renderHistory();
+        });
+
+        // Delete Log (Global function for inline onclick handler)
+        window.deleteLog = function(id) {
+            historyData = historyData.filter(log => log.id !== id);
+            updateUI(); // Updates AI suggestion if we delete a perfect log
+            renderHistory();
+        };
+
+        // Bootstrap the app
+        init();
+    </script>
+</body>
+</html>
