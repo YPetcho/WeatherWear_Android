@@ -16,8 +16,6 @@
             from { opacity: 0; transform: translateY(-5px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        
-        /* Hide scrollbar for cleaner look if content overflows slightly */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -26,7 +24,7 @@
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-800 font-sans pb-12">
 
-    <!-- Supabase Alert Banner (Hidden when keys are configured) -->
+    <!-- Supabase Alert Banner -->
     <div id="supabase-alert" class="hidden bg-amber-100 text-amber-800 px-6 py-2 text-sm text-center border-b border-amber-200">
         <strong>Local Mode:</strong> You are currently using local storage. Add your Supabase URL and Key in the code to enable cloud sync.
     </div>
@@ -38,9 +36,9 @@
                 <i data-lucide="shirt" class="w-6 h-6"></i>
                 <h1 class="text-xl font-bold tracking-tight">WeatherWear AI</h1>
             </div>
-            <div id="weather-badge" class="hidden items-center gap-2 text-slate-600 bg-slate-100 px-3 py-1.5 rounded-full text-sm font-medium">
-                <i data-lucide="thermometer" class="w-4 h-4"></i>
-                <span id="header-temp-display">--°C Today</span>
+            <div id="weather-badge" class="hidden items-center gap-3 text-slate-600 bg-slate-100 px-4 py-1.5 rounded-full text-sm font-medium">
+                <div class="flex items-center gap-1 text-red-500" title="Today's High"><i data-lucide="arrow-up" class="w-3 h-3"></i> <span id="header-high">--</span>°</div>
+                <div class="flex items-center gap-1 text-blue-500" title="Today's Low"><i data-lucide="arrow-down" class="w-3 h-3"></i> <span id="header-low">--</span>°</div>
             </div>
         </div>
     </header>
@@ -59,12 +57,16 @@
                         <i data-lucide="settings-2" class="w-4 h-4"></i> 
                         <span id="suggestion-title">Today's Suggestion</span>
                     </h2>
-                    <div class="text-5xl font-light mb-4 flex items-center gap-3" id="active-temp-display">
-                        --°C
-                    </div>
                     
-                    <div id="extra-weather-info" class="flex flex-wrap gap-4 mb-4 text-indigo-100 text-sm hidden">
-                        <!-- Extra weather info will be injected here -->
+                    <!-- Daily Profile Display -->
+                    <div class="flex items-baseline gap-4 mb-2" id="active-profile-display">
+                        <div class="text-5xl font-light"><span id="active-high">--</span>°</div>
+                        <div class="text-3xl font-light text-indigo-200">/ <span id="active-low">--</span>°</div>
+                    </div>
+                    <p class="text-indigo-200 text-sm mb-4 font-medium tracking-wide uppercase">Daily High & Low Profile</p>
+                    
+                    <div id="extra-weather-info" class="flex flex-wrap gap-4 mb-5 text-indigo-100 text-sm hidden">
+                        <!-- Extra weather info injected here -->
                     </div>
                     
                     <div id="suggestion-content">
@@ -75,7 +77,7 @@
                 <!-- Simulation Toggle -->
                 <div class="bg-white/10 backdrop-blur-md rounded-2xl p-4 w-full md:w-64 border border-white/20">
                     <label class="flex items-center justify-between cursor-pointer mb-3">
-                        <span class="text-sm font-medium text-white">Test different weather</span>
+                        <span class="text-sm font-medium text-white">Simulate Day's High</span>
                         <div class="relative">
                             <input type="checkbox" id="sim-toggle" class="sr-only" />
                             <div id="sim-track" class="block w-10 h-6 rounded-full transition-colors bg-white/30"></div>
@@ -96,6 +98,7 @@
                             <span class="font-bold text-white" id="sim-slider-val">20°C</span>
                             <span>40°C</span>
                         </div>
+                        <p class="text-xs text-indigo-200 text-center mt-2 italic">Low is estimated at -8°C</p>
                     </div>
                 </div>
             </div>
@@ -112,27 +115,23 @@
                 <!-- Top Selection -->
                 <div>
                     <label class="block text-sm font-medium text-slate-500 mb-3">Top Layer</label>
-                    <div class="flex flex-wrap gap-2" id="top-options-container">
-                        <!-- Populated by JS -->
-                    </div>
+                    <div class="flex flex-wrap gap-2" id="top-options-container"></div>
                 </div>
 
                 <!-- Bottom Selection -->
                 <div>
                     <label class="block text-sm font-medium text-slate-500 mb-3">Bottom Layer</label>
-                    <div class="flex flex-wrap gap-2" id="bottom-options-container">
-                        <!-- Populated by JS -->
-                    </div>
+                    <div class="flex flex-wrap gap-2" id="bottom-options-container"></div>
                 </div>
 
                 <!-- Feedback Selection -->
                 <div>
                     <label class="block text-sm font-medium text-slate-500 mb-3" id="feedback-label">Any notes on how it felt?</label>
-                    <textarea id="feedback-input" rows="2" class="w-full p-4 rounded-2xl border-2 border-slate-100 bg-white text-slate-800 focus:border-indigo-500 focus:ring-0 transition-all outline-none resize-none" placeholder="E.g., A bit chilly in the wind, but otherwise okay..."></textarea>
+                    <textarea id="feedback-input" rows="2" class="w-full p-4 rounded-2xl border-2 border-slate-100 bg-white text-slate-800 focus:border-indigo-500 focus:ring-0 transition-all outline-none resize-none" placeholder="E.g., A bit chilly in the morning, but perfect by noon..."></textarea>
                 </div>
 
                 <button id="save-log-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 rounded-2xl transition-colors flex items-center justify-center gap-2 shadow-sm">
-                    Save Today's Outfit
+                    Save Today's Outfit Profile
                 </button>
             </div>
         </section>
@@ -146,7 +145,7 @@
         </section>
     </main>
 
-    <!-- Supabase RLS Fix Modal -->
+    <!-- RLS Modal -->
     <div id="rls-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 fade-in">
         <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200">
             <div class="flex items-center gap-3 text-red-600 mb-4">
@@ -154,53 +153,42 @@
                 <h3 class="text-xl font-bold">Supabase Permissions Blocked</h3>
             </div>
             <p class="text-slate-600 mb-4">
-                Your code works, but Supabase rejected the request. By default, Supabase turns on <strong>Row Level Security (RLS)</strong> to protect your data, which blocks anonymous inserts.
+                By default, Supabase turns on <strong>Row Level Security (RLS)</strong> to protect your data, which blocks anonymous inserts.
             </p>
             <div class="bg-slate-900 text-slate-50 p-4 rounded-xl text-sm overflow-x-auto mb-6">
-                <p class="text-slate-400 mb-2">// Copy and paste this into your Supabase SQL Editor to fix it:</p>
-                <code class="block whitespace-pre font-mono text-green-400">ALTER TABLE outfit_logs DISABLE ROW LEVEL SECURITY;
-
--- OR if you want to keep RLS active but allow all access:
-CREATE POLICY "Allow Public Access" ON outfit_logs FOR ALL USING (true);</code>
+                <p class="text-slate-400 mb-2">// Paste this into your Supabase SQL Editor:</p>
+                <code class="block whitespace-pre font-mono text-green-400">ALTER TABLE outfit_logs DISABLE ROW LEVEL SECURITY;</code>
             </div>
             <div class="flex gap-3">
-                <button onclick="document.getElementById('rls-modal').classList.add('hidden')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold py-3 rounded-xl transition-colors">
-                    Close
-                </button>
+                <button onclick="document.getElementById('rls-modal').classList.add('hidden')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold py-3 rounded-xl transition-colors">Close</button>
                 <a href="https://supabase.com/dashboard/project/antbwsqzhkfmojdhjkih/sql/new" target="_blank" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-center font-semibold py-3 rounded-xl transition-colors flex justify-center items-center gap-2">
-                    Open SQL Editor <i data-lucide="external-link" class="w-4 h-4"></i>
+                    SQL Editor <i data-lucide="external-link" class="w-4 h-4"></i>
                 </a>
             </div>
         </div>
     </div>
 
     <script>
-        // Wrapped in an IIFE to prevent "Identifier has already been declared" errors during hot-reloading
         (() => {
-            // --- Supabase Configuration ---
             const SUPABASE_URL = 'https://antbwsqzhkfmojdhjkih.supabase.co'; 
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFudGJ3c3F6aGtmbW9qZGhqa2loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MzI2MzIsImV4cCI6MjA4ODAwODYzMn0.ABisszF4UT2AXpvrensWRrkEXDKeeHbRvaKFVQI2AnI';
             
-            // Ensure credentials are valid strings before creating client
             const isSupabaseConfigured = SUPABASE_URL.startsWith('https://');
-            // Renamed to `supabaseClient` to avoid colliding with the global `window.supabase` from the CDN
             const supabaseClient = isSupabaseConfigured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-            // --- State ---
-            // Mock data fallback in case DB is empty or fails
+            // Mock Data pre-filled with full weather parameters
             let historyData = [
-                { id: 1, date: '2026-02-15', temp: 14, top: 'Heavy Coat', bottom: 'Jeans', feedback: 'Was sweating on the walk to the train.' },
-                { id: 2, date: '2026-02-16', temp: 14, top: 'Light Jacket', bottom: 'Jeans', feedback: 'Felt perfectly comfortable.' },
-                { id: 3, date: '2026-02-17', temp: 18, top: 'T-shirt', bottom: 'Shorts', feedback: 'Too cold in the shade!' },
-                { id: 4, date: '2026-02-18', temp: 19, top: 'Long-sleeve', bottom: 'Jeans', feedback: 'Just right.' },
-                { id: 5, date: '2026-02-19', temp: 24, top: 'Sweater', bottom: 'Trousers', feedback: 'Way too hot for a sweater.' },
-                { id: 6, date: '2026-02-20', temp: 25, top: 'T-shirt', bottom: 'Shorts', feedback: 'Great for the sunny weather.' },
-                { id: 7, date: '2026-02-21', temp: 10, top: 'Heavy Coat', bottom: 'Thermal Pants', feedback: 'Kept me warm all day.' },
+                { id: 1, date: '2026-02-15', temp_max: 18, temp_min: 10, humidity: 80, wind: 15, uv: 4, top: 'Heavy Coat', bottom: 'Jeans', feedback: 'Was sweating on the walk to the train.' },
+                { id: 2, date: '2026-02-16', temp_max: 18, temp_min: 10, humidity: 40, wind: 5, uv: 5, top: 'Light Jacket', bottom: 'Jeans', feedback: 'Felt perfectly comfortable.' },
+                { id: 3, date: '2026-02-17', temp_max: 22, temp_min: 14, humidity: 65, wind: 25, uv: 6, top: 'T-shirt', bottom: 'Shorts', feedback: 'Too cold in the wind!' },
+                { id: 4, date: '2026-02-18', temp_max: 22, temp_min: 14, humidity: 50, wind: 8, uv: 6, top: 'Long-sleeve', bottom: 'Jeans', feedback: 'Just right.' },
             ];
             
             const TOP_OPTIONS = ['Tank Top', 'T-shirt', 'Long-sleeve', 'Button-up', 'Sweater', 'Hoodie', 'Light Jacket', 'Heavy Coat'];
             const BOTTOM_OPTIONS = ['Shorts', 'Skirt', 'Jeans', 'Trousers', 'Sweatpants', 'Thermal Pants'];
 
+            let todayMax = null;
+            let todayMin = null;
             let currentTemp = null;
             let currentFeelsLike = null;
             let currentHumidity = null;
@@ -210,174 +198,180 @@ CREATE POLICY "Allow Public Access" ON outfit_logs FOR ALL USING (true);</code>
             let selectedTop = 'T-shirt';
             let selectedBottom = 'Jeans';
             let isSimulating = false;
-            let simulatedTemp = 20;
+            let simulatedMax = 25;
 
-            // --- DOM Elements ---
-            const supabaseAlert = document.getElementById('supabase-alert');
-            const topOptionsContainer = document.getElementById('top-options-container');
-            const bottomOptionsContainer = document.getElementById('bottom-options-container');
-            const historyContainer = document.getElementById('history-container');
+            // DOM
             const simToggle = document.getElementById('sim-toggle');
-            const simSliderContainer = document.getElementById('sim-slider-container');
             const simSlider = document.getElementById('sim-slider');
             const saveBtn = document.getElementById('save-log-btn');
             const rlsModal = document.getElementById('rls-modal');
 
-            // --- Initialization ---
             async function init() {
-                if (!isSupabaseConfigured) {
-                    supabaseAlert.classList.remove('hidden');
-                }
+                if (!isSupabaseConfigured) document.getElementById('supabase-alert').classList.remove('hidden');
                 renderOptions();
-                await fetchHistory(); // Fetch from Supabase 
-                renderHistory();
-                lucide.createIcons(); // Initialize all icons on page load
+                await fetchHistory(); 
+                lucide.createIcons();
                 await fetchWeather();
                 updateUI();
+                renderHistory();
             }
 
-            // Centralized error handler to catch RLS specifically
             function handleSupabaseError(err) {
                 console.error("Supabase Operation Failed:", err);
-                if (err.code === '42501') {
-                    // 42501 is the Postgres error code for insufficient_privilege / RLS violation
-                    rlsModal.classList.remove('hidden');
-                } else {
-                    alert(`Database sync failed: ${err.message || "Unknown error"}`);
-                }
+                if (err.code === '42501') rlsModal.classList.remove('hidden');
+                else alert(`Database sync failed: ${err.message || "Unknown error"}\nMake sure your table has 'id' and 'log_data' (JSONB) columns!`);
             }
 
             async function fetchHistory() {
                 if (isSupabaseConfigured) {
                     try {
-                        const { data, error } = await supabaseClient
-                            .from('outfit_logs')
-                            .select('*')
-                            .order('id', { ascending: false });
-                        
+                        // We fetch 'id' and 'log_data' (the JSON column)
+                        const { data, error } = await supabaseClient.from('outfit_logs').select('id, log_data').order('id', { ascending: false });
                         if (error) throw error;
                         
-                        // If successfully fetched from real DB, replace the mock data entirely
+                        // Re-map the JSON object from Supabase back into our flat state array
                         if (data && data.length > 0) {
-                            historyData = data;
+                            historyData = data.map(row => ({
+                                id: row.id,
+                                ...row.log_data 
+                            }));
                         }
                     } catch (err) {
-                        // Silent log on load so we don't spam the user, unless it's an RLS error
-                        console.warn("Could not fetch history (using mock data):", err.message);
-                        if (err.code === '42501') {
-                            rlsModal.classList.remove('hidden');
-                        }
+                        console.warn("Could not fetch history:", err.message);
+                        if (err.code === '42501') rlsModal.classList.remove('hidden');
                     }
                 }
             }
 
             async function fetchWeather() {
                 try {
-                    // Fetch extended current weather and daily UV index max
-                    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=32.0853&longitude=34.7818&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m&daily=uv_index_max&timezone=auto');
+                    const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=32.0853&longitude=34.7818&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,uv_index_max&timezone=auto');
                     const data = await res.json();
                     
                     currentTemp = Math.round(data.current.temperature_2m);
+                    todayMax = Math.round(data.daily.temperature_2m_max[0]);
+                    todayMin = Math.round(data.daily.temperature_2m_min[0]);
+                    
                     currentFeelsLike = Math.round(data.current.apparent_temperature);
                     currentHumidity = Math.round(data.current.relative_humidity_2m);
                     currentWind = Math.round(data.current.wind_speed_10m);
-                    currentUv = data.daily && data.daily.uv_index_max ? Math.round(data.daily.uv_index_max[0]) : '--';
+                    currentUv = data.daily && data.daily.uv_index_max ? Math.round(data.daily.uv_index_max[0]) : 0;
                 } catch (err) {
                     console.error("Failed to fetch weather", err);
-                    currentTemp = 22; // Fallback
+                    todayMax = 25; todayMin = 15; currentTemp = 20; currentHumidity = 50; currentWind = 10; currentUv = 5;
                 }
                 
-                // Show header badge
-                const badge = document.getElementById('weather-badge');
-                document.getElementById('header-temp-display').innerText = `${currentTemp}°C Today`;
-                badge.classList.remove('hidden');
-                badge.classList.add('flex');
+                document.getElementById('header-high').innerText = todayMax;
+                document.getElementById('header-low').innerText = todayMin;
+                document.getElementById('weather-badge').classList.remove('hidden');
+                document.getElementById('weather-badge').classList.add('flex');
                 
-                document.getElementById('feedback-label').innerText = `Any notes on how it felt in ${currentTemp}°C?`;
+                document.getElementById('feedback-label').innerText = `Any notes on how today's ${todayMax}°/${todayMin}° profile felt?`;
             }
 
-            // --- Machine Learning Logic (KNN) ---
-            function getSuggestion(activeTemp) {
-                if (activeTemp === null) return null;
+            // --- Full Multi-Dimensional Weighted Prediction Logic ---
+            function getSuggestion(activeMax, activeMin, activeHum, activeWind, activeUv) {
+                if (activeMax === null || activeMin === null) return null;
 
                 if (historyData.length === 0) {
-                    if (activeTemp < 10) return { top: 'Heavy Coat', bottom: 'Thermal Pants', basedOnTemp: null };
-                    if (activeTemp < 16) return { top: 'Light Jacket', bottom: 'Jeans', basedOnTemp: null };
-                    if (activeTemp < 22) return { top: 'Long-sleeve', bottom: 'Jeans', basedOnTemp: null };
-                    return { top: 'T-shirt', bottom: 'Shorts', basedOnTemp: null };
+                    if (activeMax < 12) return { top: 'Heavy Coat', bottom: 'Thermal Pants' };
+                    if (activeMax < 18) return { top: 'Light Jacket', bottom: 'Jeans' };
+                    if (activeMax < 25) return { top: 'Long-sleeve', bottom: 'Jeans' };
+                    return { top: 'T-shirt', bottom: 'Shorts' };
                 }
 
-                // Find the closest past temperature log overall
                 let closestLog = historyData[0];
-                let minDiff = Math.abs(activeTemp - closestLog.temp);
+                let minDistance = Infinity;
 
-                for (let i = 1; i < historyData.length; i++) {
-                    const diff = Math.abs(activeTemp - historyData[i].temp);
-                    if (diff < minDiff) {
-                        minDiff = diff;
-                        closestLog = historyData[i];
+                // Algorithm: Calculate Euclidean distance across all parameters using weights.
+                // Weights normalize the impact (e.g., 10% humidity change = 1°C temp change in perceived impact)
+                const WEIGHT_MAX = 1.0;
+                const WEIGHT_MIN = 0.8;
+                const WEIGHT_HUM = 0.1; 
+                const WEIGHT_WIND = 0.2;
+                const WEIGHT_UV = 0.5;
+
+                for (let i = 0; i < historyData.length; i++) {
+                    const log = historyData[i];
+                    
+                    // Fallbacks in case an older log doesn't have the metric
+                    const logMax = log.temp_max !== undefined ? log.temp_max : log.temp || activeMax;
+                    const logMin = log.temp_min !== undefined ? log.temp_min : log.temp || activeMin;
+                    const logHum = log.humidity !== undefined ? log.humidity : activeHum;
+                    const logWind = log.wind !== undefined ? log.wind : activeWind;
+                    const logUv = log.uv !== undefined && log.uv !== '--' ? log.uv : activeUv;
+
+                    // Calculate the differences
+                    const diffMax = (activeMax - logMax) * WEIGHT_MAX;
+                    const diffMin = (activeMin - logMin) * WEIGHT_MIN;
+                    const diffHum = (activeHum - logHum) * WEIGHT_HUM;
+                    const diffWind = (activeWind - logWind) * WEIGHT_WIND;
+                    const diffUv = (activeUv - logUv) * WEIGHT_UV;
+
+                    // Multi-dimensional Pythagorean Theorem
+                    const distance = Math.sqrt(
+                        (diffMax * diffMax) + 
+                        (diffMin * diffMin) + 
+                        (diffHum * diffHum) + 
+                        (diffWind * diffWind) + 
+                        (diffUv * diffUv)
+                    );
+
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestLog = log;
                     }
                 }
 
                 return { 
                     top: closestLog.top, 
                     bottom: closestLog.bottom, 
-                    basedOnTemp: closestLog.temp,
+                    basedOnMax: closestLog.temp_max || closestLog.temp,
+                    basedOnMin: closestLog.temp_min || closestLog.temp,
                     notes: closestLog.feedback
                 };
             }
 
-            // --- Render Functions ---
             function updateUI() {
-                const activeTemp = isSimulating ? simulatedTemp : currentTemp;
+                const activeMax = isSimulating ? simulatedMax : todayMax;
+                const activeMin = isSimulating ? simulatedMax - 8 : todayMin; 
+                const activeHum = isSimulating ? 50 : currentHumidity; // Defaulting standard simulation values
+                const activeWind = isSimulating ? 10 : currentWind;
+                const activeUv = isSimulating ? 5 : currentUv;
                 
-                // Suggestion Card
-                document.getElementById('suggestion-title').innerText = isSimulating ? "Simulated Suggestion" : "Today's Suggestion";
-                document.getElementById('active-temp-display').innerText = activeTemp !== null ? `${activeTemp}°C` : '--°C';
+                document.getElementById('suggestion-title').innerText = isSimulating ? "Simulated Day Profile" : "Today's Suggestion";
+                document.getElementById('active-high').innerText = activeMax !== null ? activeMax : '--';
+                document.getElementById('active-low').innerText = activeMin !== null ? activeMin : '--';
                 
                 // Toggle Extra Weather Info
                 const extraInfoContainer = document.getElementById('extra-weather-info');
-                const tempDisplay = document.getElementById('active-temp-display');
-                
                 if (isSimulating || currentHumidity === null) {
                     extraInfoContainer.classList.add('hidden');
-                    tempDisplay.classList.replace('mb-1', 'mb-4');
                 } else {
                     extraInfoContainer.classList.remove('hidden');
-                    tempDisplay.classList.replace('mb-4', 'mb-1');
                     extraInfoContainer.innerHTML = `
-                        <div class="flex items-center gap-1" title="Feels Like">
-                            <i data-lucide="thermometer" class="w-4 h-4"></i> Feels ${currentFeelsLike}°
-                        </div>
-                        <div class="flex items-center gap-1" title="Humidity">
-                            <i data-lucide="droplets" class="w-4 h-4"></i> ${currentHumidity}%
-                        </div>
-                        <div class="flex items-center gap-1" title="Wind Speed">
-                            <i data-lucide="wind" class="w-4 h-4"></i> ${currentWind} km/h
-                        </div>
-                        <div class="flex items-center gap-1" title="Max UV Index">
-                            <i data-lucide="sun" class="w-4 h-4"></i> UV ${currentUv}
-                        </div>
+                        <div class="flex items-center gap-1" title="Current Temp"><i data-lucide="thermometer" class="w-4 h-4"></i> Now: ${currentTemp}°</div>
+                        <div class="flex items-center gap-1" title="Humidity"><i data-lucide="droplets" class="w-4 h-4"></i> ${currentHumidity}%</div>
+                        <div class="flex items-center gap-1" title="Wind Speed"><i data-lucide="wind" class="w-4 h-4"></i> ${currentWind} km/h</div>
+                        <div class="flex items-center gap-1" title="Max UV Index"><i data-lucide="sun" class="w-4 h-4"></i> UV ${currentUv}</div>
                     `;
                 }
 
-                // Update Background Icon
-                const iconBgContainer = document.getElementById('weather-icon-bg');
                 let iconHtml = '<i data-lucide="cloud" class="w-48 h-48"></i>';
-                if (activeTemp !== null) {
-                    if (activeTemp > 22) iconHtml = '<i data-lucide="sun" class="w-48 h-48"></i>';
-                    else if (activeTemp < 15) iconHtml = '<i data-lucide="snowflake" class="w-48 h-48"></i>';
+                if (activeMax !== null) {
+                    if (activeMax > 24) iconHtml = '<i data-lucide="sun" class="w-48 h-48"></i>';
+                    else if (activeMax < 15) iconHtml = '<i data-lucide="snowflake" class="w-48 h-48"></i>';
                 }
-                iconBgContainer.innerHTML = iconHtml;
+                document.getElementById('weather-icon-bg').innerHTML = iconHtml;
 
-                // Update Suggestion Text
-                const suggestion = getSuggestion(activeTemp);
+                // Provide all params to suggestion logic
+                const suggestion = getSuggestion(activeMax, activeMin, activeHum, activeWind, activeUv);
                 const suggestionContent = document.getElementById('suggestion-content');
                 
                 if (suggestion) {
                     let html = `<p class="text-xl font-medium">Wear a <span class="text-yellow-300 border-b border-yellow-300/30 pb-0.5">${suggestion.top}</span> & <span class="text-yellow-300 border-b border-yellow-300/30 pb-0.5">${suggestion.bottom}</span>.</p>`;
-                    if (suggestion.basedOnTemp !== null) {
-                        html += `<p class="text-indigo-100 text-sm mt-2 opacity-90">Based on your log around ${suggestion.basedOnTemp}°C.</p>`;
+                    if (suggestion.basedOnMax !== null && suggestion.basedOnMax !== undefined) {
+                        html += `<p class="text-indigo-100 text-sm mt-2 opacity-90">Based on a similar logged day: ${suggestion.basedOnMax}° / ${suggestion.basedOnMin}°.</p>`;
                         if (suggestion.notes && suggestion.notes !== 'No notes') {
                             html += `<div class="mt-3 bg-white/10 p-3 rounded-xl border border-white/20 text-sm italic shadow-inner">You noted: "${suggestion.notes}"</div>`;
                         }
@@ -387,38 +381,16 @@ CREATE POLICY "Allow Public Access" ON outfit_logs FOR ALL USING (true);</code>
                     suggestionContent.innerHTML = html;
                 }
 
-                // Update Form UI
                 updateOptionsUI();
-                
-                // Re-bind new icons
                 lucide.createIcons();
             }
 
             function renderOptions() {
-                // Tops
-                topOptionsContainer.innerHTML = TOP_OPTIONS.map(top => 
-                    `<button data-value="${top}" class="top-btn px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedTop === top ? 'bg-slate-800 text-white shadow-md scale-105' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">${top}</button>`
-                ).join('');
+                document.getElementById('top-options-container').innerHTML = TOP_OPTIONS.map(top => `<button data-value="${top}" class="top-btn px-4 py-2 rounded-full text-sm font-medium transition-all">${top}</button>`).join('');
+                document.getElementById('bottom-options-container').innerHTML = BOTTOM_OPTIONS.map(bottom => `<button data-value="${bottom}" class="bottom-btn px-4 py-2 rounded-full text-sm font-medium transition-all">${bottom}</button>`).join('');
 
-                // Bottoms
-                bottomOptionsContainer.innerHTML = BOTTOM_OPTIONS.map(bottom => 
-                    `<button data-value="${bottom}" class="bottom-btn px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedBottom === bottom ? 'bg-slate-800 text-white shadow-md scale-105' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}">${bottom}</button>`
-                ).join('');
-
-                // Bind listeners dynamically
-                document.querySelectorAll('.top-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        selectedTop = e.target.dataset.value;
-                        updateOptionsUI();
-                    });
-                });
-
-                document.querySelectorAll('.bottom-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        selectedBottom = e.target.dataset.value;
-                        updateOptionsUI();
-                    });
-                });
+                document.querySelectorAll('.top-btn').forEach(btn => btn.addEventListener('click', (e) => { selectedTop = e.target.dataset.value; updateOptionsUI(); }));
+                document.querySelectorAll('.bottom-btn').forEach(btn => btn.addEventListener('click', (e) => { selectedBottom = e.target.dataset.value; updateOptionsUI(); }));
             }
 
             function updateOptionsUI() {
@@ -433,36 +405,37 @@ CREATE POLICY "Allow Public Access" ON outfit_logs FOR ALL USING (true);</code>
             }
 
             function renderHistory() {
+                const historyContainer = document.getElementById('history-container');
                 if (historyData.length === 0) {
                     historyContainer.innerHTML = `<div class="text-center p-8 text-slate-400 border-2 border-dashed border-slate-200 rounded-3xl">No outfits logged yet. Start tracking to get ML suggestions!</div>`;
                     return;
                 }
 
                 historyContainer.innerHTML = historyData.map(log => {
+                    const displayMax = log.temp_max !== undefined ? log.temp_max : log.temp;
+                    const displayMin = log.temp_min !== undefined ? log.temp_min : '--';
+                    
                     return `
                     <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex items-start justify-between group">
                         <div class="flex gap-4 w-full">
-                            <div class="w-12 h-12 rounded-full flex items-center justify-center shrink-0 bg-indigo-50 text-indigo-500">
-                                <i data-lucide="message-square" class="w-6 h-6"></i>
+                            <div class="w-12 h-12 rounded-full flex flex-col items-center justify-center shrink-0 bg-indigo-50 text-indigo-500 border border-indigo-100">
+                                <span class="text-sm font-bold leading-none">${displayMax}°</span>
+                                <span class="text-[10px] text-indigo-300 leading-none mt-1 border-t border-indigo-200 pt-0.5">${displayMin}°</span>
                             </div>
                             <div class="flex-1">
                                 <div class="flex items-center gap-2 mb-1">
-                                    <span class="font-semibold text-slate-800">${log.temp}°C</span>
+                                    <span class="font-semibold text-slate-800">${log.top} & ${log.bottom}</span>
                                     <span class="text-slate-300">•</span>
                                     <span class="text-sm text-slate-500">${log.date}</span>
                                 </div>
                                 ${log.humidity !== undefined && log.humidity !== null ? `
-                                <div class="flex items-center gap-3 text-xs text-slate-500 mb-2">
-                                    <span class="flex items-center gap-1" title="Feels Like"><i data-lucide="thermometer" class="w-3 h-3"></i> Feels ${log.feels_like || log.temp}°</span>
+                                <div class="flex flex-wrap items-center gap-3 text-xs text-slate-400 mb-2">
                                     <span class="flex items-center gap-1" title="Humidity"><i data-lucide="droplets" class="w-3 h-3"></i> ${log.humidity}%</span>
                                     <span class="flex items-center gap-1" title="Wind"><i data-lucide="wind" class="w-3 h-3"></i> ${log.wind} km/h</span>
                                     <span class="flex items-center gap-1" title="UV"><i data-lucide="sun" class="w-3 h-3"></i> UV ${log.uv}</span>
                                 </div>
                                 ` : ''}
-                                <p class="text-slate-800 font-medium mb-1">
-                                    ${log.top} + ${log.bottom}
-                                </p>
-                                ${log.feedback && log.feedback !== 'No notes' ? `<p class="text-sm text-slate-500 italic bg-slate-50 p-2.5 rounded-lg border border-slate-100 mt-2">"${log.feedback}"</p>` : ''}
+                                ${log.feedback && log.feedback !== 'No notes' ? `<p class="text-sm text-slate-600 italic bg-slate-50 p-2.5 rounded-lg border border-slate-100">"${log.feedback}"</p>` : ''}
                             </div>
                         </div>
                         <button onclick="deleteLog(${log.id})" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors opacity-0 group-hover:opacity-100 shrink-0" title="Delete log">
@@ -475,91 +448,73 @@ CREATE POLICY "Allow Public Access" ON outfit_logs FOR ALL USING (true);</code>
                 lucide.createIcons();
             }
 
-            // --- Event Handlers ---
-            
-            // Simulator Toggle
             simToggle.addEventListener('change', (e) => {
                 isSimulating = e.target.checked;
-                
-                // UI Toggle updates
                 const track = document.getElementById('sim-track');
                 const thumb = document.getElementById('sim-thumb');
-                
                 if (isSimulating) {
                     track.classList.replace('bg-white/30', 'bg-green-400');
                     thumb.classList.add('translate-x-4');
-                    simSliderContainer.classList.remove('hidden');
+                    document.getElementById('sim-slider-container').classList.remove('hidden');
                 } else {
                     track.classList.replace('bg-green-400', 'bg-white/30');
                     thumb.classList.remove('translate-x-4');
-                    simSliderContainer.classList.add('hidden');
+                    document.getElementById('sim-slider-container').classList.add('hidden');
                 }
                 updateUI();
             });
 
-            // Simulator Slider
             simSlider.addEventListener('input', (e) => {
-                simulatedTemp = parseInt(e.target.value);
-                document.getElementById('sim-slider-val').innerText = `${simulatedTemp}°C`;
+                simulatedMax = parseInt(e.target.value);
+                document.getElementById('sim-slider-val').innerText = `${simulatedMax}°C`;
                 updateUI();
             });
 
-            // Save Log
             saveBtn.addEventListener('click', async () => {
-                if (currentTemp === null) return; // Prevent saving if weather hasn't loaded
+                if (todayMax === null) return; 
                 
                 const feedbackVal = document.getElementById('feedback-input').value.trim();
-
-                const newLog = {
-                    id: Date.now(), // Temporary ID for immediate UI update
+                
+                // Pack everything into a single payload object
+                const logDataPayload = {
                     date: new Date().toISOString().split('T')[0],
                     temp: currentTemp,
+                    temp_max: todayMax, 
+                    temp_min: todayMin, 
                     feels_like: currentFeelsLike,
                     humidity: currentHumidity,
                     wind: currentWind,
-                    uv: currentUv,
+                    uv: currentUv === '--' ? null : currentUv,
                     top: selectedTop,
                     bottom: selectedBottom,
                     feedback: feedbackVal || 'No notes'
                 };
                 
-                // Optimistically update UI
+                const newLog = {
+                    id: Date.now(),
+                    ...logDataPayload
+                };
+                
                 historyData.unshift(newLog);
-                document.getElementById('feedback-input').value = ''; // clear input
+                document.getElementById('feedback-input').value = '';
                 updateUI();
                 renderHistory();
 
-                // Save to Supabase
                 if (isSupabaseConfigured) {
                     try {
-                        // Omit the ID so Supabase can auto-generate it (prevents Identity column errors)
-                        const dbPayload = {
-                            date: newLog.date,
-                            temp: newLog.temp,
-                            feels_like: newLog.feels_like,
-                            humidity: newLog.humidity,
-                            wind: newLog.wind,
-                            uv: newLog.uv === '--' ? null : newLog.uv, // Prevent database insertion error if UV is unavailable
-                            top: newLog.top,
-                            bottom: newLog.bottom,
-                            feedback: newLog.feedback
-                        };
-
-                        const { data, error } = await supabaseClient
-                            .from('outfit_logs')
-                            .insert([dbPayload])
-                            .select();
-                            
+                        // DB Insert ONLY uses the log_data JSON column now!
+                        const { data, error } = await supabaseClient.from('outfit_logs').insert([
+                            { log_data: logDataPayload }
+                        ]).select();
+                        
                         if (error) throw error;
                         
-                        // If DB successfully assigned a different ID, update our local array
                         if (data && data.length > 0) {
                             const index = historyData.findIndex(log => log.id === newLog.id);
                             if (index !== -1) historyData[index].id = data[0].id;
-                            renderHistory(); // Re-render to ensure delete buttons have correct IDs
+                            renderHistory(); 
                         }
                     } catch (err) {
-                        // If it fails, revert the optimistic UI update
                         historyData = historyData.filter(log => log.id !== newLog.id);
                         renderHistory();
                         handleSupabaseError(err);
@@ -567,29 +522,19 @@ CREATE POLICY "Allow Public Access" ON outfit_logs FOR ALL USING (true);</code>
                 }
             });
 
-            // Delete Log (Global function for inline onclick handler)
             window.deleteLog = async function(id) {
-                // Keep a backup of the deleted log in case we need to revert
                 const logToRestore = historyData.find(log => log.id === id);
-                
-                // Optimistically remove from UI
                 historyData = historyData.filter(log => log.id !== id);
                 updateUI(); 
                 renderHistory();
 
-                // Delete from Supabase
                 if (isSupabaseConfigured) {
                     try {
-                        const { error } = await supabaseClient
-                            .from('outfit_logs')
-                            .delete()
-                            .eq('id', id);
+                        const { error } = await supabaseClient.from('outfit_logs').delete().eq('id', id);
                         if (error) throw error;
                     } catch (err) {
-                        // Revert optimistic delete
                         if(logToRestore) {
                             historyData.push(logToRestore);
-                            // Sort by date/id descending to keep order correct after restore
                             historyData.sort((a,b) => b.id - a.id);
                         }
                         renderHistory();
@@ -598,7 +543,6 @@ CREATE POLICY "Allow Public Access" ON outfit_logs FOR ALL USING (true);</code>
                 }
             };
 
-            // Bootstrap the app
             init();
         })();
     </script>
